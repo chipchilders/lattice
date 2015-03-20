@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_json_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
+    "os"
 )
 
 //appRunner:             config.AppRunner,
@@ -18,28 +20,55 @@ import (
 //tailedLogsOutputter:   config.TailedLogsOutputter,
 
 type ReceptorJsonCommandFactory struct {
-	ui  terminal.UI
-	tlo console_tailed_logs_outputter.TailedLogsOutputter
+	receptorJsonRunner receptor_json_runner.ReceptorJsonRunner
+	ui                 terminal.UI
+	tlo                console_tailed_logs_outputter.TailedLogsOutputter
 }
 
-func NewReceptorJsonRunnerCommandFactory(ui terminal.UI, tlo console_tailed_logs_outputter.TailedLogsOutputter) *ReceptorJsonCommandFactory {
+func NewReceptorJsonRunnerCommandFactory(receptorJsonRunner receptor_json_runner.ReceptorJsonRunner, ui terminal.UI, tlo console_tailed_logs_outputter.TailedLogsOutputter) *ReceptorJsonCommandFactory {
 	return &ReceptorJsonCommandFactory{
-		ui:  ui,
-		tlo: tlo,
+		receptorJsonRunner: receptorJsonRunner,
+		ui:                 ui,
+		tlo:                tlo,
 	}
 }
 
-func (commandFactory *ReceptorJsonCommandFactory) MakeCreateAppFromJsonCommand() cli.Command {
+func (factory *ReceptorJsonCommandFactory) MakeCreateAppFromJsonCommand() cli.Command {
 	var createCommand = cli.Command{
 		Name:        "create-from-json",
 		ShortName:   "cfj",
 		Usage:       "ltc create-from-json /path/to/file.json",
 		Description: `Create a LRP on lattice from JSON object`,
-		Action:      commandFactory.createAppFromJson,
+		Action:      factory.createAppFromJson,
 	}
 	return createCommand
 }
 
-func (cmd *ReceptorJsonCommandFactory) createAppFromJson(c *cli.Context) {
-	cmd.ui.Say(fmt.Sprintf("Attempting to Create LRP from %s", c.Args().First()))
+func (factory *ReceptorJsonCommandFactory) createAppFromJson(c *cli.Context) {
+    filePath := c.Args().First()
+
+    file, err := os.Open(filePath)
+    if err != nil {
+        factory.ui.Say(err.Error())
+        return
+    }
+
+    data := make([]byte, 100)
+    _, err = file.Read(data)
+    if err != nil {
+        factory.ui.Say(err.Error())
+        return
+    }
+
+    factory.ui.Say(fmt.Sprintf("Attempting to Create LRP from %s", c.Args().First()))
+
+    err = factory.receptorJsonRunner.CreateAppFromJson(string(data[:]))
+    if err != nil {
+        factory.ui.Say(err.Error())
+        return
+    }
+
+//    factory.tlo.OutputTailedLogs("the app guid goes here")
+    // stream logs
+    // poll until start
 }
