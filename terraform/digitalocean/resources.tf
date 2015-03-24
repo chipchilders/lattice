@@ -10,6 +10,7 @@ resource "digitalocean_droplet" "lattice-coordinator" {
 
     connection {
         key_file = "${var.do_ssh_private_key_file}"
+        timeout = "2m"
     }
 
     #COMMON
@@ -63,6 +64,7 @@ resource "digitalocean_droplet" "lattice-cell" {
 
     connection {
         key_file = "${var.do_ssh_private_key_file}"
+        timeout = "2m"
     }
 
     #COMMON

@@ -30,6 +30,11 @@ variable "do_size_cell" {
     default = "2gb"
 }
 
+variable "do_connection_timeout" {
+    description = "The timeout setting for droplet creation."
+    default = "2m"
+}
+
 variable "num_cells" {
     description = "The number of Lattice Cells to launch."
     default = "3"
